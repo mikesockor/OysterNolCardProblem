@@ -1,0 +1,16 @@
+#
+# [ Database Configuration Section ]
+#
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/adfg
+    username: postgres
+    password: 1234
+    platform: POSTGRESQL
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQL92Dialect
+server:
+  port: 9095
