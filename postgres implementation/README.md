@@ -1,5 +1,6 @@
-used Java8, and Postgres 9.2 db
+# OysterNolCardProblem
 
+used Java8, and Postgres 9.2 db
 used Spring Boot, just for test puprose 
 obviously in production we should use vanila java as much as we can
 
@@ -23,14 +24,17 @@ which means table will clear at application startup, to avoid - change "create" 
 
 --------------------------------------POST examples:
 --------------------------------------creation card 
+
 post http://localhost:9095/card
+```json
 {
     "id": 6959144023113,
     "owner": "mikie",
     "balance": 30
 }
-
+```
 responce
+```json
 {
     "id": 6959144023113,
     "owner": "mikie",
@@ -38,8 +42,10 @@ responce
     "checkInTime": null,
     "checkinStationEntity": null
 }
+```
 --------------------------------------transaction checkin
 post http://localhost:9095/transaction
+```json
 {
     "cardEntity": {
         "id": 6959144023113,
@@ -56,8 +62,9 @@ post http://localhost:9095/transaction
     },
     "transactionType": 0
 }
-
+```
 responce
+```json
 {
     "cardEntity": {
         "id": 6959144023113,
@@ -85,8 +92,10 @@ responce
     },
     "transactionType": "IN"
 }
+```
 --------------------------------------transaction checkout
 post http://localhost:9095/transaction
+```json
 {
     "cardEntity": {
         "id": 6959144023113,
@@ -103,8 +112,9 @@ post http://localhost:9095/transaction
     },
     "transactionType": 1
 }
-
+```
 responce
+```json
 {
     "cardEntity": {
         "id": 6959144023113,
@@ -124,8 +134,10 @@ responce
     },
     "transactionType": "OUT"
 }
+```
 --------------------------------------transaction history with hours depth
 http://localhost:9095/transaction?cardId=6959144023113&hours=3
+```json
 {
     "cardEntity": {
         "id": 6959144023113,
@@ -153,3 +165,4 @@ http://localhost:9095/transaction?cardId=6959144023113&hours=3
         }
     ]
 }
+```

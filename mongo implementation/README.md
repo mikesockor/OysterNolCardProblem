@@ -1,16 +1,21 @@
+# OysterNolCardProblem
+
 used Java8, and mongodb
 just start and use
 
 POST http://localhost:8090/card
+```json
 {
     "id": "6959144023113",
     "owner": "mikie",
     "balance": 30
 }
+```
 response 200 OK
 
 
 POST http://localhost:8090/transaction
+```json
 {
     "type": "IN",
     "cardId": "6959144023113",
@@ -18,13 +23,16 @@ POST http://localhost:8090/transaction
     "stationType": "bus",
     "stationZone": 1
 }
+```
 response 200 OK
+```json
 {
     "message": null,
     "cost": 30
 }
-
+```
 POST http://localhost:8090/transaction
+```json
 {
     "type": "OUT",
     "cardId": "6959144023113",
@@ -32,13 +40,16 @@ POST http://localhost:8090/transaction
     "stationType": "bus",
     "stationZone": 1
 }
+```
 response 200 OK
+```json
 {
     "message": null,
     "cost": 28.2
 }
-
+```
 http://localhost:8090/transaction?cardId=6959144023113&hours=4
+```json
 [
     {
         "id": "5a1528c185a42d1c60cf8657",
@@ -61,3 +72,4 @@ http://localhost:8090/transaction?cardId=6959144023113&hours=4
         "cost": 0
     }
 ]
+```
