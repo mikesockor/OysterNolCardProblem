@@ -12,29 +12,29 @@ import java.time.ZoneId;
 import java.util.Date;
 
 @Component
-public class SheduledTask {
+public class ScheduledTask {
 
-    @Value("${rates.balance.fixation.hours}")
+    @Value("${custom.rates.balance.fixation.hours}")
     private int ratesBalanceFixationHours;
     private final CardRepository cardRepository;
 
     @Autowired
-    public SheduledTask(CardRepository cardRepository) {
+    public ScheduledTask(CardRepository cardRepository) {
         this.cardRepository = cardRepository;
     }
 
-    @Scheduled(cron = "${rates.balance.fixation.cron}")
-    public void fixOutdatedCards() throws IOException {
+    @Scheduled(cron = "${custom.rates.balance.fixation.cron}")
+    public void fixOutdatedCards() {
 
         cardRepository.findByCheckInTimeGreaterThan(Date.from(
                 LocalDateTime.now()
                         .minusHours(ratesBalanceFixationHours)
                         .atZone(ZoneId.systemDefault())
                         .toInstant()))
-                .subscribe(crd -> {
+                .doOnNext(crd -> {
                     crd.setStationType(null);
                     crd.setStationZone(null);
-                    cardRepository.save(crd).subscribe();
+                    cardRepository.save(crd);
                 });
     }
 }

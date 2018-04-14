@@ -1,0 +1,14 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: Oyster-NOL-problem
+  data:
+    mongodb:
+      database: adfg
+  sleuth:
+    sampler:
+      probability: 1.0
+
+logging.level.org.springframework.cloud.sleuth: DEBUG

@@ -1,0 +1,9 @@
+custom:
+  card:
+    max-fare: 3.20
+  rates:
+    balance:
+      fixation:
+        cron: 0 3 * * * *
+        hours: 3
+

@@ -7,17 +7,17 @@ import com.adfg.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.List;
 
 @Component
 public class TransactionService {
 
-    @Value("${card.maxFare}")
+    @Value("${custom.card.max-fare}")
     private Double cardMaxFare;
     private final CardRepository cardRepository;
     private final TransactionRepository transactionRepository;
@@ -28,50 +28,48 @@ public class TransactionService {
         this.transactionRepository = transactionRepository;
     }
 
-    TransactionResponse proceed(Mono<Transaction> monoTransaction) {
+    Mono<TransactionResponse> proceed(Mono<Transaction> monoTransaction) {
 
-        Transaction transaction = monoTransaction.block();
-        return cardRepository.findById(transaction.getCardId())
-                .map(crd -> {
-                            TransactionResponse trxResponse = new TransactionResponse();
-                            if (transaction.getType().equals("IN")) {
+        return monoTransaction
+                .flatMap(monoTrx -> cardRepository.findById(monoTrx.getCardId())
+                        .flatMap(crd -> Mono.just(new TransactionResponse())
+                                .doOnNext(tr -> {
+                                            if (monoTrx.getType().equals("IN")) {
 
-                                if ((crd.getBalance() - cardMaxFare) < 0 || crd.getStationType() != null) {
-                                    trxResponse.setMessage((crd.getBalance() - cardMaxFare) < 0 ? ("balance is below " + cardMaxFare) : "already checked in: " + crd.getStationType());
-                                } else {
-                                    trxResponse.setCost(crd.getBalance());
-                                    crd.setBalance(crd.getBalance() - cardMaxFare);
-                                    crd.setCheckInTime(new Date());
-                                    crd.setStationType(transaction.getStationType());
-                                    crd.setStationZone(transaction.getStationZone());
-                                }
-
-                            } else {
-                                crd.computeRefund(crd, transaction, cardMaxFare);
-                                crd.setCheckInTime(null);
-                                crd.setStationType(null);
-                                crd.setStationZone(null);
-                                trxResponse.setCost(crd.getBalance());
-                            }
-                            if (trxResponse.getMessage() == null)
-                                cardRepository.save(crd)
-                                        .subscribe(cr -> {
-                                                    transaction.setCheckInTime(new Date());
-                                                    transactionRepository.save(transaction).subscribe();
+                                                if ((crd.getBalance() - cardMaxFare) < 0 || crd.getStationType() != null) {
+                                                    tr.setMessage((crd.getBalance() - cardMaxFare) < 0 ? ("balance is below " + cardMaxFare) : "already checked in: " + crd.getStationType());
+                                                } else {
+                                                    tr.setCost(crd.getBalance());
+                                                    crd.setBalance(crd.getBalance() - cardMaxFare);
+                                                    crd.setCheckInTime(new Date());
+                                                    crd.setStationType(monoTrx.getStationType());
+                                                    crd.setStationZone(monoTrx.getStationZone());
                                                 }
-                                        );
-                            return trxResponse;
-                        }
-                ).block();
+
+                                            } else {
+                                                crd.computeRefund(crd, monoTrx, cardMaxFare);
+                                                crd.setCheckInTime(null);
+                                                crd.setStationType(null);
+                                                crd.setStationZone(null);
+                                                tr.setCost(crd.getBalance());
+                                            }
+                                            if (tr.getMessage() == null)
+                                                cardRepository.save(crd).doOnNext(cr -> {
+                                                            monoTrx.setCheckInTime(new Date());
+                                                            transactionRepository.save(monoTrx);
+                                                        }
+                                                );
+                                        }
+                                )
+                        )
+                );
     }
 
-    List<Transaction> getCardReport(String hours, String cardId) {
+    Flux<Transaction> getCardReport(String hours, String cardId) {
         return transactionRepository.findByCheckInTimeGreaterThanAndCardId(Date.from(
                 LocalDateTime.now()
                         .minusHours(Integer.valueOf(hours))
                         .atZone(ZoneId.systemDefault())
-                        .toInstant()), cardId)
-                .collectList()
-                .block();
+                        .toInstant()), cardId);
     }
 }
