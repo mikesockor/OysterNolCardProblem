@@ -1,6 +1,6 @@
 package com.adfg.domain;
 
-import com.adfg.RefundService;
+import com.adfg.account.RefundService;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;

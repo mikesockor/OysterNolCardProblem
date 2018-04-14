@@ -1,4 +1,4 @@
-package com.adfg;
+package com.adfg.account;
 
 import com.adfg.domain.Card;
 import com.adfg.domain.Transaction;
@@ -13,11 +13,11 @@ public interface RefundService {
 
     /**
      * ALL BUS JOURNEY
+     * ANY THREE ZONES
      * ANY IN 1 ZONE
      * ANY ONE ZONE, OUTSIDE 1
      * ANY TWO ZONES, EXCLUDING 1
      * ANY TWO ZONES, INCLUDING 1
-     * ANY THREE ZONES
      **/
     default Double computeRefund(Card card, Transaction transaction, Double cardMaxFare) {
 
