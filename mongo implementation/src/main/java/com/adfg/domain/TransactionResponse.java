@@ -2,10 +2,11 @@ package com.adfg.domain;
 
 import lombok.*;
 
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
 public class TransactionResponse {
-    @Getter @Setter private String message;
-    @Getter @Setter private double cost;
+    private String message;
+    private double cost;
 }

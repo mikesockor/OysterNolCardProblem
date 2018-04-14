@@ -1,5 +1,6 @@
 package com.adfg.domain;
 
+import com.adfg.RefundService;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -11,10 +12,10 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Card {
+public class Card implements RefundService {
     @Id private String id;
-    @Getter @Setter private Double balance;
-    @Getter @Setter private Date checkInTime;
-    @Getter private String stationType;
-    @Getter private Integer stationZone;
+    private Double balance;
+    private Date checkInTime;
+    private String stationType;
+    private Integer stationZone;
 }

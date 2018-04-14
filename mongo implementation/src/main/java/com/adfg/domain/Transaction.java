@@ -16,11 +16,11 @@ import java.util.Date;
 public class Transaction {
 
     @Id private String id;
-    @Getter @Setter private Date checkInTime;
-    @Getter private String type;
-    @Getter private String cardId;
-    @Getter private String stationName;
-    @Getter private String stationType;
-    @Getter private Integer stationZone;
-    @Transient @Getter @Setter private double cost;
+    private Date checkInTime;
+    private String type;
+    private String cardId;
+    private String stationName;
+    private String stationType;
+    private Integer stationZone;
+    @Transient private double cost;
 }

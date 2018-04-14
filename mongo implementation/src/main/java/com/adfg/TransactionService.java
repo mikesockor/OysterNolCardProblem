@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 @Component
-public class TransactionService {
+public class TransactionService{
 
     @Value("${card.maxFare}")
     private Double cardMaxFare;
@@ -47,8 +47,7 @@ public class TransactionService {
                                 }
 
                             } else {
-                                RefundByZone refundByZone = new RefundByZone(crd.getStationZone(), transaction.getStationZone(), cardMaxFare, crd.getStationType());
-                                crd.setBalance(crd.getBalance()+refundByZone.getRefund());
+                                crd.computeRefund(crd,transaction,cardMaxFare);
                                 crd.setCheckInTime(null);
                                 crd.setStationType(null);
                                 crd.setStationZone(null);
