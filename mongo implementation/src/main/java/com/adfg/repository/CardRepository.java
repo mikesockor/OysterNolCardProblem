@@ -7,7 +7,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.Date;
 
-public interface CardRepository extends ReactiveMongoRepository<Card, String>{
+public interface CardRepository extends ReactiveMongoRepository<Card, String> {
     Mono<Card> findById(String id);
+
     Flux<Card> findByCheckInTimeGreaterThan(Date date);
 }

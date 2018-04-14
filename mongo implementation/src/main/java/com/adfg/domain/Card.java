@@ -13,7 +13,8 @@ import java.util.Date;
 @AllArgsConstructor
 @ToString
 public class Card implements RefundService {
-    @Id private String id;
+    @Id
+    private String id;
     private Double balance;
     private Date checkInTime;
     private String stationType;

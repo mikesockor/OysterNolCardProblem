@@ -15,12 +15,14 @@ import java.util.Date;
 @ToString
 public class Transaction {
 
-    @Id private String id;
+    @Id
+    private String id;
     private Date checkInTime;
     private String type;
     private String cardId;
     private String stationName;
     private String stationType;
     private Integer stationZone;
-    @Transient private double cost;
+    @Transient
+    private double cost;
 }

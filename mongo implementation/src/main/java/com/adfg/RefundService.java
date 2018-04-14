@@ -3,31 +3,35 @@ package com.adfg;
 import com.adfg.domain.Card;
 import com.adfg.domain.Transaction;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.BiPredicate;
+
 public interface RefundService {
 
-    default Double computeRefund(Card card, Transaction transaction, Double cardMaxFare){
+    LinkedHashMap<BiPredicate<Card, Transaction>, Double> predicates = new LinkedHashMap<>();
 
-        // ALL BUS JOURNEY
-        if (card.getStationType().equals("bus"))
-            return (card.getBalance() + cardMaxFare - 1.80);
+    /**
+     * ALL BUS JOURNEY
+     * ANY IN 1 ZONE
+     * ANY ONE ZONE, OUTSIDE 1
+     * ANY TWO ZONES, EXCLUDING 1
+     * ANY TWO ZONES, INCLUDING 1
+     * ANY THREE ZONES
+     **/
+    default Double computeRefund(Card card, Transaction transaction, Double cardMaxFare) {
 
-        // ANY IN 1 ZONE
-        if (card.getStationZone()==1 && transaction.getStationZone()==1)
-            return (card.getBalance() + cardMaxFare - 2.50);
+        predicates.put((crd, trx) -> crd.getStationType().equals("bus"), 1.80);
+        predicates.put((crd, trx) -> crd.getStationZone() == 3 || trx.getStationZone() == 3, 3.20);
+        predicates.put((crd, trx) -> crd.getStationZone() == 1 && trx.getStationZone() == 1, 2.50);
+        predicates.put((crd, trx) -> (crd.getStationZone() != 1 && trx.getStationZone() != 1) && crd.getStationZone().equals(trx.getStationZone()), 2.00);
+        predicates.put((crd, trx) -> (crd.getStationZone() != 1 && trx.getStationZone() != 1) && !crd.getStationZone().equals(trx.getStationZone()), 2.25);
+        predicates.put((crd, trx) -> ((crd.getStationZone() == 1 || trx.getStationZone() == 1) && !crd.getStationZone().equals(trx.getStationZone())), 3.00);
 
-        // ANY ONE ZONE, OUTSIDE 1
-        if ((card.getStationZone()!=1 && transaction.getStationZone()!=1) && card.getStationZone()==transaction.getStationZone())
-            return (card.getBalance() + cardMaxFare - 2.00);
-
-        // ANY TWO ZONES, EXCLUDING 1
-        if ((card.getStationZone()!=1 && transaction.getStationZone()!=1) && card.getStationZone()!=transaction.getStationZone())
-            return (card.getBalance() + cardMaxFare - 2.25);
-
-        // ANY TWO ZONES, INCLUDING 1
-        if (card.getStationZone()!=transaction.getStationZone() && (card.getStationZone()==1 || transaction.getStationZone()==1))
-            return (card.getBalance() + cardMaxFare - 3.00);
-
-        // ANY THREE ZONES
-        return 3.20;
+        return card.getBalance() + cardMaxFare - predicates.entrySet().stream()
+                .filter(pr -> pr.getKey().test(card, transaction))
+                .findFirst()
+                .map(Map.Entry::getValue)
+                .orElse(cardMaxFare);
     }
 }

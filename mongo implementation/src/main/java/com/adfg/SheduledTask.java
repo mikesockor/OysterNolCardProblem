@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -16,6 +17,7 @@ public class SheduledTask {
     @Value("${rates.balance.fixation.hours}")
     private int ratesBalanceFixationHours;
     private final CardRepository cardRepository;
+
     @Autowired
     public SheduledTask(CardRepository cardRepository) {
         this.cardRepository = cardRepository;
@@ -29,7 +31,7 @@ public class SheduledTask {
                         .minusHours(ratesBalanceFixationHours)
                         .atZone(ZoneId.systemDefault())
                         .toInstant()))
-                .subscribe(crd->{
+                .subscribe(crd -> {
                     crd.setStationType(null);
                     crd.setStationZone(null);
                     cardRepository.save(crd).subscribe();

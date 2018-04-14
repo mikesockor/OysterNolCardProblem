@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 @Component
-public class TransactionService{
+public class TransactionService {
 
     @Value("${card.maxFare}")
     private Double cardMaxFare;
@@ -28,34 +28,34 @@ public class TransactionService{
         this.transactionRepository = transactionRepository;
     }
 
-    TransactionResponse proceed(Mono<Transaction> monoTransaction){
+    TransactionResponse proceed(Mono<Transaction> monoTransaction) {
 
         Transaction transaction = monoTransaction.block();
         return cardRepository.findById(transaction.getCardId())
-                .map(crd->{
+                .map(crd -> {
                             TransactionResponse trxResponse = new TransactionResponse();
-                            if (transaction.getType().equals("IN")){
+                            if (transaction.getType().equals("IN")) {
 
-                                if ((crd.getBalance()-cardMaxFare)<0 || crd.getStationType()!=null){
-                                    trxResponse.setMessage((crd.getBalance()-cardMaxFare)<0 ? ("balance is below "+cardMaxFare) : "already checked in: "+crd.getStationType());
+                                if ((crd.getBalance() - cardMaxFare) < 0 || crd.getStationType() != null) {
+                                    trxResponse.setMessage((crd.getBalance() - cardMaxFare) < 0 ? ("balance is below " + cardMaxFare) : "already checked in: " + crd.getStationType());
                                 } else {
                                     trxResponse.setCost(crd.getBalance());
-                                    crd.setBalance(crd.getBalance()-cardMaxFare);
+                                    crd.setBalance(crd.getBalance() - cardMaxFare);
                                     crd.setCheckInTime(new Date());
                                     crd.setStationType(transaction.getStationType());
                                     crd.setStationZone(transaction.getStationZone());
                                 }
 
                             } else {
-                                crd.computeRefund(crd,transaction,cardMaxFare);
+                                crd.computeRefund(crd, transaction, cardMaxFare);
                                 crd.setCheckInTime(null);
                                 crd.setStationType(null);
                                 crd.setStationZone(null);
                                 trxResponse.setCost(crd.getBalance());
                             }
-                            if(trxResponse.getMessage()==null)
+                            if (trxResponse.getMessage() == null)
                                 cardRepository.save(crd)
-                                        .subscribe(cr->{
+                                        .subscribe(cr -> {
                                                     transaction.setCheckInTime(new Date());
                                                     transactionRepository.save(transaction).subscribe();
                                                 }
@@ -65,7 +65,7 @@ public class TransactionService{
                 ).block();
     }
 
-    List<Transaction> getCardReport(String hours, String cardId){
+    List<Transaction> getCardReport(String hours, String cardId) {
         return transactionRepository.findByCheckInTimeGreaterThanAndCardId(Date.from(
                 LocalDateTime.now()
                         .minusHours(Integer.valueOf(hours))
