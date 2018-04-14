@@ -22,7 +22,7 @@ public class RoutesConfiguration {
         return nest(path("/card"), nest(accept(MediaType.APPLICATION_JSON),
                 route(
                         POST("/"), request -> {
-                            cardRepository.insert(request.bodyToMono(Card.class)).subscribe();
+                            cardRepository.insert(request.bodyToMono(Card.class));
                             return ok().build();
                         })));
     }
