@@ -73,3 +73,23 @@ http://localhost:8090/transaction?cardId=6959144023113&hours=4
     }
 ]
 ```
+
+http://www.baeldung.com/spring-5-webclient
+From a Mono:
+
+return customerMono
+           .flatMap(c -> ok().body(BodyInserters.fromObject(c)))
+           .switchIfEmpty(notFound().build());
+From a Flux:
+
+return customerFlux
+           .collectList()
+           .flatMap(l -> {
+               if(l.isEmpty()) {
+                 return notFound().build();
+
+               }
+               else {
+                 return ok().body(BodyInserters.fromObject(l)));
+               }
+           });
