@@ -32,6 +32,8 @@ public class TransactionService {
         this.transactionRepository = transactionRepository;
     }
 
+    //TODO implement controller advice to handle errors and throw instead of set message
+    //TODO simplify proceed method
     Mono<ServerResponse> proceed(Mono<Transaction> monoTransaction) {
 
         return monoTransaction
