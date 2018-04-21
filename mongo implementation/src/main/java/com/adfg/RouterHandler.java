@@ -28,22 +28,19 @@ public class RouterHandler {
     Mono<ServerResponse> saveCard(final ServerRequest request) {
 
         return request.bodyToMono(Card.class)
-                .flatMap(rbm -> {
-                    Mono<Double> doubleMono = cardRepository.findById(rbm.getId())
-                            .map(Card::getBalance)
-                            .defaultIfEmpty(0.00)
-                            .doOnNext(dv -> {
-                                rbm.setBalance(rbm.getBalance() + dv);
-                                cardRepository.save(rbm);
-                            });
-                    return doubleMono;
-                })
-                .flatMap(bi -> ok().body(BodyInserters.fromObject(bi)));
+                .flatMap(rbm ->
+                        cardRepository.findById(rbm.getId())
+                                .flatMap(ex -> {
+                                    ex.setBalance(ex.getBalance() + rbm.getBalance());
+                                    return cardRepository.save(ex)
+                                            .flatMap(fex -> ok().body(BodyInserters.fromObject(fex)));
+                                })
+                                .switchIfEmpty(cardRepository.save(rbm)
+                                        .flatMap(fex -> ok().body(BodyInserters.fromObject(fex)))));
     }
 
     Mono<ServerResponse> proceedTransaction(final ServerRequest request) {
-        return ServerResponse.ok()
-                .body(transactionService.proceed(request.bodyToMono(Transaction.class)), TransactionResponse.class);
+        return transactionService.proceed(request.bodyToMono(Transaction.class));
     }
 
     Mono<ServerResponse> getTransactions(final ServerRequest request) {
