@@ -1,9 +1,11 @@
 package com.adfg;
 
+import com.adfg.domain.Card;
 import com.adfg.domain.Transaction;
-import com.adfg.domain.TransactionResponse;
 import com.adfg.repository.CardRepository;
 import com.adfg.repository.TransactionRepository;
+import com.adfg.rest.AlreadyCheckedInException;
+import com.adfg.rest.BalanceIsBelowException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -11,10 +13,13 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.function.Function;
 
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
@@ -22,8 +27,8 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 public class TransactionService {
 
     @Value("${custom.card.max-fare}")
-    private Double cardMaxFare;
-    private final CardRepository cardRepository;
+    private       Double                cardMaxFare;
+    private final CardRepository        cardRepository;
     private final TransactionRepository transactionRepository;
 
     @Autowired
@@ -32,54 +37,55 @@ public class TransactionService {
         this.transactionRepository = transactionRepository;
     }
 
-    //TODO implement controller advice to handle errors and throw instead of set message
-    //TODO simplify proceed method
-    Mono<ServerResponse> proceed(Mono<Transaction> monoTransaction) {
+    public Mono<ServerResponse> proceed(Mono<Transaction> monoTransaction) throws AlreadyCheckedInException, BalanceIsBelowException {
+
+        Function<Tuple2<Card, Transaction>, Tuple2<Card, Transaction>> cardTransaction = ctpl -> {
+            if (ctpl.getT2().getType().equals("IN")) {
+
+                if (ctpl.getT1().getBalance() < cardMaxFare)
+                    throw new BalanceIsBelowException(String.valueOf(cardMaxFare));
+                if (ctpl.getT1().getStationType() != null)
+                    throw new AlreadyCheckedInException();
+
+                ctpl.getT2().setCost(ctpl.getT1().getBalance());
+                ctpl.getT1().setBalance(ctpl.getT1().getBalance() - cardMaxFare);
+                ctpl.getT1().setCheckInTime(new Date());
+                ctpl.getT1().setStationType(ctpl.getT2().getStationType());
+                ctpl.getT1().setStationZone(ctpl.getT2().getStationZone());
+
+            }
+            else {
+                ctpl.getT1().computeRefund(ctpl.getT1(), ctpl.getT2(), cardMaxFare);
+                ctpl.getT1().setCheckInTime(null);
+                ctpl.getT1().setStationType(null);
+                ctpl.getT1().setStationZone(null);
+                ctpl.getT2().setCost(ctpl.getT1().getBalance());
+            }
+            return Tuples.of(ctpl.getT1(), ctpl.getT2());
+        };
 
         return monoTransaction
-                .flatMap(monoTrx ->
-                        cardRepository.findById(monoTrx.getCardId())
-                                .flatMap(crd -> Mono.just(new TransactionResponse())
-                                        .flatMap(tr -> {
-                                            if (monoTrx.getType().equals("IN")) {
+            .flatMap(monoTrx ->
+                cardRepository.findById(monoTrx.getCardId())
+                    .flatMap(crd -> {
+                            Tuple2<Card, Transaction> tupleResult = cardTransaction.apply(Tuples.of(crd, monoTrx));
 
-                                                if ((crd.getBalance() - cardMaxFare) < 0 || crd.getStationType() != null) {
-                                                    tr.setMessage((crd.getBalance() - cardMaxFare) < 0 ? ("balance is below " + cardMaxFare) : "already checked in: " + crd.getStationType());
-                                                } else {
-                                                    tr.setCost(crd.getBalance());
-                                                    crd.setBalance(crd.getBalance() - cardMaxFare);
-                                                    crd.setCheckInTime(new Date());
-                                                    crd.setStationType(monoTrx.getStationType());
-                                                    crd.setStationZone(monoTrx.getStationZone());
-                                                }
-
-                                            } else {
-                                                crd.computeRefund(crd, monoTrx, cardMaxFare);
-                                                crd.setCheckInTime(null);
-                                                crd.setStationType(null);
-                                                crd.setStationZone(null);
-                                                tr.setCost(crd.getBalance());
-                                            }
-                                            if (tr.getMessage() == null)
-                                                return cardRepository.save(crd).flatMap(cr -> {
-                                                    monoTrx.setCheckInTime(new Date());
-                                                    return transactionRepository.save(monoTrx)
-                                                            .flatMap(fex -> ok().body(BodyInserters.fromObject(fex)));
-                                                });
-                                            else
-                                                return Mono.just(new TransactionResponse(String.format("Card %s error %s", monoTrx.getCardId(), tr.getMessage()), 0))
-                                                        .flatMap(fex -> ok().body(BodyInserters.fromObject(fex)));
-                                        }))
-                                .switchIfEmpty(Mono.just(new TransactionResponse(String.format("Card does`nt exist in system %s", monoTrx.getCardId()), 0))
-                                        .flatMap(fex -> ok().body(BodyInserters.fromObject(fex)))));
-
+                            return cardRepository.save(tupleResult.getT1()).flatMap(cr -> {
+                                tupleResult.getT2().setCheckInTime(new Date());
+                                tupleResult.getT2().setCost(cr.getBalance());
+                                return transactionRepository.save(tupleResult.getT2()).flatMap(fex -> ok().body(BodyInserters.fromObject(fex)));
+                            });
+                        }
+                    )
+                    .switchIfEmpty(ServerResponse.notFound().build())
+            );
     }
 
-    Flux<Transaction> getCardReport(String hours, String cardId) {
+    public Flux<Transaction> getCardReport(String hours, String cardId) {
         return transactionRepository.findByCheckInTimeGreaterThanAndCardId(Date.from(
-                LocalDateTime.now()
-                        .minusHours(Integer.valueOf(hours))
-                        .atZone(ZoneId.systemDefault())
-                        .toInstant()), cardId);
+            LocalDateTime.now()
+                .minusHours(Integer.valueOf(hours))
+                .atZone(ZoneId.systemDefault())
+                .toInstant()), cardId);
     }
 }

@@ -1,5 +1,6 @@
-package com.adfg;
+package com.adfg.rest;
 
+import com.adfg.TransactionService;
 import com.adfg.domain.Card;
 import com.adfg.domain.Transaction;
 import com.adfg.domain.TransactionResponse;
@@ -16,7 +17,7 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 @Component
 public class RouterHandler {
 
-    private CardRepository cardRepository;
+    private CardRepository     cardRepository;
     private TransactionService transactionService;
 
     @Autowired
@@ -39,7 +40,7 @@ public class RouterHandler {
                                         .flatMap(fex -> ok().body(BodyInserters.fromObject(fex)))));
     }
 
-    Mono<ServerResponse> proceedTransaction(final ServerRequest request) {
+    Mono<ServerResponse> proceedTransaction(final ServerRequest request) throws BalanceIsBelowException, AlreadyCheckedInException {
         return transactionService.proceed(request.bodyToMono(Transaction.class));
     }
 

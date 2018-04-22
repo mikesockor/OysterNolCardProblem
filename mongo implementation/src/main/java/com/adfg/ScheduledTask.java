@@ -15,7 +15,7 @@ import java.util.Date;
 public class ScheduledTask {
 
     @Value("${custom.rates.balance.fixation.hours}")
-    private int ratesBalanceFixationHours;
+    private       int            ratesBalanceFixationHours;
     private final CardRepository cardRepository;
 
     @Autowired
@@ -27,14 +27,14 @@ public class ScheduledTask {
     public void fixOutdatedCards() {
 
         cardRepository.findByCheckInTimeGreaterThan(Date.from(
-                LocalDateTime.now()
-                        .minusHours(ratesBalanceFixationHours)
-                        .atZone(ZoneId.systemDefault())
-                        .toInstant()))
-                .doOnNext(crd -> {
-                    crd.setStationType(null);
-                    crd.setStationZone(null);
-                    cardRepository.save(crd);
-                });
+            LocalDateTime.now()
+                .minusHours(ratesBalanceFixationHours)
+                .atZone(ZoneId.systemDefault())
+                .toInstant()))
+            .doOnNext(crd -> {
+                crd.setStationType(null);
+                crd.setStationZone(null);
+                cardRepository.save(crd);
+            });
     }
 }
