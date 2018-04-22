@@ -49,17 +49,15 @@ public class TransactionService {
                 crd.setCheckInTime(new Date());
                 crd.setStationType(trx.getStationType());
                 crd.setStationZone(trx.getStationZone());
-
-            }
-            else {
+            } else {
                 crd.computeRefund(crd, trx, cardMaxFare);
                 crd.setCheckInTime(null);
                 crd.setStationType(null);
                 crd.setStationZone(null);
             }
             return Mono.just(crd);
-
         };
+
         return monoTransaction
             .flatMap(monoTrx -> cardRepository.findById(monoTrx.getCardId())
                 .flatMap(crd -> cf1.apply(crd, monoTrx)
@@ -68,9 +66,7 @@ public class TransactionService {
                             monoTrx.setCheckInTime(new Date());
                             monoTrx.setCost(cr.getBalance());
                             return transactionRepository.save(monoTrx).flatMap(fex -> ok().body(BodyInserters.fromObject(fex)));
-                        }))
-
-                )
+                        })))
                 .switchIfEmpty(ServerResponse.notFound().build())
             );
     }
