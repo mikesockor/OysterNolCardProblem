@@ -1,4 +1,4 @@
-package com.adfg.account;
+package com.adfg.service;
 
 import com.adfg.domain.Card;
 import com.adfg.domain.Transaction;

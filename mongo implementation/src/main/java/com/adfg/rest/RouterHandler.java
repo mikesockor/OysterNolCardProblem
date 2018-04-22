@@ -1,9 +1,8 @@
 package com.adfg.rest;
 
-import com.adfg.TransactionService;
+import com.adfg.service.TransactionService;
 import com.adfg.domain.Card;
 import com.adfg.domain.Transaction;
-import com.adfg.domain.TransactionResponse;
 import com.adfg.repository.CardRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
