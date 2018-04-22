@@ -13,13 +13,11 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
@@ -39,45 +37,41 @@ public class TransactionService {
 
     public Mono<ServerResponse> proceed(Mono<Transaction> monoTransaction) throws AlreadyCheckedInException, BalanceIsBelowException {
 
-        Function<Tuple2<Card, Transaction>, Tuple2<Card, Transaction>> cardTransaction = ctpl -> {
-            if (ctpl.getT2().getType().equals("IN")) {
+        BiFunction<Card, Transaction, Mono<Card>> cf1 = (crd, trx) -> {
+            if (trx.getType().equals("IN")) {
 
-                if (ctpl.getT1().getBalance() < cardMaxFare)
+                if (crd.getBalance() < cardMaxFare)
                     throw new BalanceIsBelowException(String.valueOf(cardMaxFare));
-                if (ctpl.getT1().getStationType() != null)
+                if (crd.getStationType() != null)
                     throw new AlreadyCheckedInException();
 
-                ctpl.getT2().setCost(ctpl.getT1().getBalance());
-                ctpl.getT1().setBalance(ctpl.getT1().getBalance() - cardMaxFare);
-                ctpl.getT1().setCheckInTime(new Date());
-                ctpl.getT1().setStationType(ctpl.getT2().getStationType());
-                ctpl.getT1().setStationZone(ctpl.getT2().getStationZone());
+                crd.setBalance(crd.getBalance() - cardMaxFare);
+                crd.setCheckInTime(new Date());
+                crd.setStationType(trx.getStationType());
+                crd.setStationZone(trx.getStationZone());
 
             }
             else {
-                ctpl.getT1().computeRefund(ctpl.getT1(), ctpl.getT2(), cardMaxFare);
-                ctpl.getT1().setCheckInTime(null);
-                ctpl.getT1().setStationType(null);
-                ctpl.getT1().setStationZone(null);
-                ctpl.getT2().setCost(ctpl.getT1().getBalance());
+                crd.computeRefund(crd, trx, cardMaxFare);
+                crd.setCheckInTime(null);
+                crd.setStationType(null);
+                crd.setStationZone(null);
             }
-            return Tuples.of(ctpl.getT1(), ctpl.getT2());
+            return Mono.just(crd);
+
         };
-
         return monoTransaction
-            .flatMap(monoTrx ->
-                cardRepository.findById(monoTrx.getCardId())
-                    .flatMap(crd -> {
-                            Tuple2<Card, Transaction> tupleResult = cardTransaction.apply(Tuples.of(crd, monoTrx));
+            .flatMap(monoTrx -> cardRepository.findById(monoTrx.getCardId())
+                .flatMap(crd -> cf1.apply(crd, monoTrx)
+                    .flatMap(cc -> cardRepository.save(cc)
+                        .flatMap(cr -> {
+                            monoTrx.setCheckInTime(new Date());
+                            monoTrx.setCost(cr.getBalance());
+                            return transactionRepository.save(monoTrx).flatMap(fex -> ok().body(BodyInserters.fromObject(fex)));
+                        }))
 
-                            return cardRepository.save(tupleResult.getT1()).flatMap(cr -> {
-                                tupleResult.getT2().setCheckInTime(new Date());
-                                tupleResult.getT2().setCost(cr.getBalance());
-                                return transactionRepository.save(tupleResult.getT2()).flatMap(fex -> ok().body(BodyInserters.fromObject(fex)));
-                            });
-                        }
-                    )
-                    .switchIfEmpty(ServerResponse.notFound().build())
+                )
+                .switchIfEmpty(ServerResponse.notFound().build())
             );
     }
 
