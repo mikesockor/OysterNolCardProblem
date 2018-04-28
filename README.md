@@ -42,3 +42,9 @@ Any three zones | £3.20
 Any bus journey | £1.80
 
 The maximum possible fare is therefore £3.20.
+
+Solution:
+
+There are 2 entities - Card & Transaction 
+Due checkin you will be charged to maximum amount, due checkout refund amount will be calculated and update 
+card balance accordigly
