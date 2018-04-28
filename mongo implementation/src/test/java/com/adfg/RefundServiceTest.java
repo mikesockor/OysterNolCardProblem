@@ -2,6 +2,7 @@ package com.adfg;
 
 import com.adfg.domain.Card;
 import com.adfg.domain.Transaction;
+import com.adfg.service.RefundServiceImpl;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,9 +26,9 @@ public class RefundServiceTest {
         transaction.setStationZone(1);
 
         card.setStationType("bus");
-        assertEquals((cardMaxFare - 1.80), card.computeRefund(card, transaction, cardMaxFare), 0.0);
+        assertEquals((cardMaxFare - 1.80), RefundServiceImpl.computeImpl.computeRefund(card, transaction, cardMaxFare), 0.0);
         card.setStationType("metro");
-        assertEquals((cardMaxFare - 2.50), card.computeRefund(card, transaction, cardMaxFare), 0.0);
+        assertEquals((cardMaxFare - 2.50), RefundServiceImpl.computeImpl.computeRefund(card, transaction, cardMaxFare), 0.0);
 
     }
 
@@ -38,9 +39,9 @@ public class RefundServiceTest {
         transaction.setStationZone(2);
 
         card.setStationType("bus");
-        assertEquals((cardMaxFare - 1.80), card.computeRefund(card, transaction, cardMaxFare), 0.0);
+        assertEquals((cardMaxFare - 1.80), RefundServiceImpl.computeImpl.computeRefund(card, transaction, cardMaxFare), 0.0);
         card.setStationType("metro");
-        assertEquals((cardMaxFare - 2.00), card.computeRefund(card, transaction, cardMaxFare), 0.0);
+        assertEquals((cardMaxFare - 2.00), RefundServiceImpl.computeImpl.computeRefund(card, transaction, cardMaxFare), 0.0);
 
     }
 
@@ -51,9 +52,9 @@ public class RefundServiceTest {
         transaction.setStationZone(2);
 
         card.setStationType("bus");
-        assertEquals((cardMaxFare - 1.80), card.computeRefund(card, transaction, cardMaxFare), 0.0);
+        assertEquals((cardMaxFare - 1.80), RefundServiceImpl.computeImpl.computeRefund(card, transaction, cardMaxFare), 0.0);
         card.setStationType("metro");
-        assertEquals((cardMaxFare - 3.00), card.computeRefund(card, transaction, cardMaxFare), 0.0);
+        assertEquals((cardMaxFare - 3.00), RefundServiceImpl.computeImpl.computeRefund(card, transaction, cardMaxFare), 0.0);
 
     }
 
@@ -64,9 +65,9 @@ public class RefundServiceTest {
         transaction.setStationZone(4);
 
         card.setStationType("bus");
-        assertEquals((cardMaxFare - 1.80), card.computeRefund(card, transaction, cardMaxFare), 0.0);
+        assertEquals((cardMaxFare - 1.80), RefundServiceImpl.computeImpl.computeRefund(card, transaction, cardMaxFare), 0.0);
         card.setStationType("metro");
-        assertEquals((cardMaxFare - 2.25), card.computeRefund(card, transaction, cardMaxFare), 0.0);
+        assertEquals((cardMaxFare - 2.25), RefundServiceImpl.computeImpl.computeRefund(card, transaction, cardMaxFare), 0.0);
 
     }
 
@@ -77,9 +78,9 @@ public class RefundServiceTest {
         transaction.setStationZone(3);
 
         card.setStationType("bus");
-        assertEquals((cardMaxFare - 1.80), card.computeRefund(card, transaction, cardMaxFare), 0.0);
+        assertEquals((cardMaxFare - 1.80), RefundServiceImpl.computeImpl.computeRefund(card, transaction, cardMaxFare), 0.0);
         card.setStationType("metro");
-        assertEquals((cardMaxFare - 3.20), card.computeRefund(card, transaction, cardMaxFare), 0.0);
+        assertEquals((cardMaxFare - 3.20), RefundServiceImpl.computeImpl.computeRefund(card, transaction, cardMaxFare), 0.0);
 
     }
 

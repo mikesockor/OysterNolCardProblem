@@ -9,8 +9,6 @@ import com.adfg.rest.BalanceIsBelowException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,14 +17,12 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.function.BiFunction;
 
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
-
 @Component
 public class TransactionService {
 
     @Value("${custom.card.max-fare}")
-    private       Double                cardMaxFare;
-    private final CardRepository        cardRepository;
+    private Double cardMaxFare;
+    private final CardRepository cardRepository;
     private final TransactionRepository transactionRepository;
 
     @Autowired
@@ -35,7 +31,7 @@ public class TransactionService {
         this.transactionRepository = transactionRepository;
     }
 
-    public Mono<ServerResponse> proceed(Mono<Transaction> monoTransaction) throws AlreadyCheckedInException, BalanceIsBelowException {
+    public Flux<Transaction> proceed(Flux<Transaction> monoTransaction) throws AlreadyCheckedInException, BalanceIsBelowException {
 
         BiFunction<Card, Transaction, Mono<Card>> cf1 = (crd, trx) -> {
             if (trx.getType().equals("IN")) {
@@ -50,7 +46,7 @@ public class TransactionService {
                 crd.setStationType(trx.getStationType());
                 crd.setStationZone(trx.getStationZone());
             } else {
-                crd.computeRefund(crd, trx, cardMaxFare);
+                crd.setBalance(RefundServiceImpl.computeImpl.computeRefund(crd, trx, cardMaxFare));
                 crd.setCheckInTime(null);
                 crd.setStationType(null);
                 crd.setStationZone(null);
@@ -59,22 +55,21 @@ public class TransactionService {
         };
 
         return monoTransaction
-            .flatMap(monoTrx -> cardRepository.findById(monoTrx.getCardId())
-                .flatMap(crd -> cf1.apply(crd, monoTrx)
-                    .flatMap(cc -> cardRepository.save(cc)
-                        .flatMap(cr -> {
-                            monoTrx.setCheckInTime(new Date());
-                            monoTrx.setCost(cr.getBalance());
-                            return transactionRepository.save(monoTrx).flatMap(fex -> ok().body(BodyInserters.fromObject(fex)));
-                        })))
-                .switchIfEmpty(ServerResponse.notFound().build())
-            );
+                .flatMap(monoTrx -> cardRepository.findById(monoTrx.getCardId())
+                        .flatMap(crd -> cf1.apply(crd, monoTrx)
+                                .flatMap(cc -> cardRepository.save(cc)
+                                        .flatMap(cr -> {
+                                            monoTrx.setCheckInTime(new Date());
+                                            monoTrx.setCost(cr.getBalance());
+                                            return transactionRepository.save(monoTrx);
+                                        })))
+                );
     }
 
-    public Flux<Transaction> getCardReport(String hours, String cardId) {
+    public Flux<Transaction> getCardReport(String cardId, Double hours) {
         return transactionRepository.findByCheckInTimeGreaterThanAndCardId(Date.from(
             LocalDateTime.now()
-                .minusHours(Integer.valueOf(hours))
+                .minusHours(hours.intValue())
                 .atZone(ZoneId.systemDefault())
                 .toInstant()), cardId);
     }

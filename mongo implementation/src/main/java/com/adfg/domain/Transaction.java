@@ -1,11 +1,15 @@
 package com.adfg.domain;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Transient;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.Instant;
 import java.util.Date;
 
 @Data
@@ -23,6 +27,11 @@ public class Transaction {
     private String stationName;
     private String stationType;
     private Integer stationZone;
-    @Transient
     private double cost;
+
+    @CreatedDate
+    private Instant createdDate;
+    @LastModifiedDate
+    private Instant lastModifiedDate;
+
 }

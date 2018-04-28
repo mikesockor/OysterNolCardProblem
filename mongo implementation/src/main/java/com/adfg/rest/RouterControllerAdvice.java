@@ -2,7 +2,6 @@ package com.adfg.rest;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 /**
@@ -12,12 +11,12 @@ import reactor.core.publisher.Mono;
 public class RouterControllerAdvice {
 
     @ExceptionHandler(BalanceIsBelowException.class)
-    public Mono<ServerResponse> balanceIsBelowException(final BalanceIsBelowException exception) {
+    public Mono balanceIsBelowException(final BalanceIsBelowException exception) {
         return Mono.error(exception);
     }
 
     @ExceptionHandler(AlreadyCheckedInException.class)
-    public Mono<ServerResponse> balanceIsBelowException(final AlreadyCheckedInException exception) {
+    public Mono balanceIsBelowException(final AlreadyCheckedInException exception) {
         return Mono.error(exception);
     }
 
