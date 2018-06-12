@@ -49,3 +49,5 @@ There are 2 entities - Card & Transaction
 
 Due checkin you will be charged to maximum amount, due checkout refund amount will be calculated and update 
 card balance accordigly
+
+either https://github.com/rulebook-rules/rulebook or https://github.com/kiegroup/drools will be implemented soon
