@@ -6,30 +6,24 @@ import com.adfg.repository.CardRepository;
 import com.adfg.repository.TransactionRepository;
 import com.adfg.rest.AlreadyCheckedInException;
 import com.adfg.rest.BalanceIsBelowException;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.function.BiFunction;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.function.BiFunction;
-
 @Component
+@RequiredArgsConstructor
 public class TransactionService {
 
     @Value("${custom.card.max-fare}")
-    private Double cardMaxFare;
-    private final CardRepository cardRepository;
+    private       Double                cardMaxFare;
+    private final CardRepository        cardRepository;
     private final TransactionRepository transactionRepository;
-
-    @Autowired
-    public TransactionService(CardRepository cardRepository, TransactionRepository transactionRepository) {
-        this.cardRepository = cardRepository;
-        this.transactionRepository = transactionRepository;
-    }
 
     public Flux<Transaction> proceed(Flux<Transaction> monoTransaction) throws AlreadyCheckedInException, BalanceIsBelowException {
 
@@ -45,7 +39,8 @@ public class TransactionService {
                 crd.setCheckInTime(new Date());
                 crd.setStationType(trx.getStationType());
                 crd.setStationZone(trx.getStationZone());
-            } else {
+            }
+            else {
                 crd.setBalance(RefundServiceImpl.computeImpl.computeRefund(crd, trx, cardMaxFare));
                 crd.setCheckInTime(null);
                 crd.setStationType(null);
@@ -55,15 +50,15 @@ public class TransactionService {
         };
 
         return monoTransaction
-                .flatMap(monoTrx -> cardRepository.findById(monoTrx.getCardId())
-                        .flatMap(crd -> cf1.apply(crd, monoTrx)
-                                .flatMap(cc -> cardRepository.save(cc)
-                                        .flatMap(cr -> {
-                                            monoTrx.setCheckInTime(new Date());
-                                            monoTrx.setCost(cr.getBalance());
-                                            return transactionRepository.save(monoTrx);
-                                        })))
-                );
+            .flatMap(monoTrx -> cardRepository.findById(monoTrx.getCardId())
+                .flatMap(crd -> cf1.apply(crd, monoTrx)
+                    .flatMap(cc -> cardRepository.save(cc)
+                        .flatMap(cr -> {
+                            monoTrx.setCheckInTime(new Date());
+                            monoTrx.setCost(cr.getBalance());
+                            return transactionRepository.save(monoTrx);
+                        })))
+            );
     }
 
     public Flux<Transaction> getCardReport(String cardId, Double hours) {

@@ -1,6 +1,7 @@
 package com.adfg;
 
 import com.adfg.repository.CardRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,16 +12,12 @@ import java.time.ZoneId;
 import java.util.Date;
 
 @Component
+@RequiredArgsConstructor
 public class ScheduledTask {
 
     @Value("${custom.rates.balance.fixation.hours}")
     private int ratesBalanceFixationHours;
     private final CardRepository cardRepository;
-
-    @Autowired
-    public ScheduledTask(CardRepository cardRepository) {
-        this.cardRepository = cardRepository;
-    }
 
     @Scheduled(cron = "${custom.rates.balance.fixation.cron}")
     public void fixOutdatedCards() {
